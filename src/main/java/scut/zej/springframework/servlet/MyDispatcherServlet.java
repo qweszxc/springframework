@@ -33,6 +33,7 @@ public class MyDispatcherServlet extends HttpServlet {
 	private List<String> classNames=new ArrayList<>();
 	private Map<String,Object>ioc=new HashMap<>();
 	private Map<String,Method>handlerMapping =new HashMap<>();
+	private Map<String,MethodExtend>extendMapping=new HashMap<>();
     
     public MyDispatcherServlet() {
     }
@@ -40,17 +41,26 @@ public class MyDispatcherServlet extends HttpServlet {
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		response.getWriter().append("Served at: ").append(request.getContextPath());
 		String url=request.getRequestURI();
-		System.out.println("url"+url);
 		String contextPath=request.getContextPath();
-		System.out.println("contextPath"+contextPath);
 		url=url.replace(contextPath, "").replaceAll("/+", "/");
 		if(!handlerMapping.containsKey(url)) {
 			response.getWriter().write("404 Not Found");
 			return;
 		}
 		Method m=handlerMapping.get(url);
+		MethodExtend methodExtend=extendMapping.get(url);
+		
+		System.out.println(m.getName());
 		//obj调用方法的instance args方法实参
 		//m.invoke(obj, args)
+		Class<?> clazz;
+		try {
+			clazz = Class.forName(methodExtend.className);
+			Object obj=clazz.newInstance();
+			methodExtend.method.invoke(obj,request,response);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -92,6 +102,10 @@ public class MyDispatcherServlet extends HttpServlet {
 						MyRequestMapping requestMapping=method.getAnnotation(MyRequestMapping.class);
 						String url=(baseUrl+requestMapping.value()).replaceAll("/+", "/");
 						handlerMapping.put(url, method);
+						MethodExtend methodExtend=new MethodExtend();
+						methodExtend.method=method;
+						methodExtend.className=clazz.getName();
+						extendMapping.put(url, methodExtend);
 					}else
 						continue;
 				}
@@ -207,6 +221,11 @@ public class MyDispatcherServlet extends HttpServlet {
 			String className=(packageName+"."+f.getName().replaceAll(".class", ""));
 			classNames.add(className);
 		}
+	}
+	class MethodExtend{
+		Method method;
+		String className;
+		String[]parameterName;
 	}
 
 	
