@@ -1,1 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<beans>
+	<bean id="test" class="scut.zej.demo.Test">
+		<porperties name="message" value="hello"></porperties>
+		<porperties name="message1" value="hello"></porperties>
+	</bean>
+</beans>
